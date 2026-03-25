@@ -3,8 +3,9 @@ import "./globals.css";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Agent",
+  title: "Welcome to Joja Mart",
   description: "AI video agent",
+  icons: { icon: "/favicon.png" },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
