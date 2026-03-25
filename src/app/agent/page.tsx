@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+const LS_KEY = "editor_html";
 
 // ─── Markdown renderer ────────────────────────────────────────────────────────
 
@@ -40,6 +42,7 @@ const DEFAULT_HTML = `<!DOCTYPE html>
 <head>
   <meta charset="UTF-8" />
   <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: system-ui, sans-serif;
       display: flex;
@@ -47,29 +50,27 @@ const DEFAULT_HTML = `<!DOCTYPE html>
       align-items: center;
       justify-content: center;
       min-height: 100vh;
-      margin: 0;
-      background: #f5f5f5;
+      background: #fafafa;
       color: #111;
+      gap: 1rem;
+      padding: 2rem;
+      text-align: center;
     }
-    h1 { font-size: 2rem; margin-bottom: 0.5rem; }
-    p { color: #555; }
-    button {
-      margin-top: 1rem;
-      padding: 0.5rem 1.25rem;
-      background: black;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 1rem;
+    .badge {
+      font-size: 0.7rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #999;
+      font-weight: 500;
     }
-    button:hover { background: #333; }
+    h1 { font-size: 2.5rem; font-weight: 700; }
+    p { color: #666; max-width: 420px; line-height: 1.65; }
   </style>
 </head>
 <body>
-  <h1>Hello, world!</h1>
-  <p>Edit the code or markdown →</p>
-  <button onclick="this.textContent = 'Clicked!'">Click me</button>
+  <span class="badge">Onboarding</span>
+  <h1>Welcome to the team, Jack 👋</h1>
+  <p>We're glad to have you here. Explore the docs, set up your environment, and don't hesitate to reach out if you need anything.</p>
 </body>
 </html>`;
 
@@ -107,8 +108,18 @@ export default function AgentPage() {
 
   // Editor state
   const [tab, setTab] = useState<EditorTab>("code");
-  const [html, setHtml] = useState(DEFAULT_HTML);
+  const [html, setHtml] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem(LS_KEY) ?? DEFAULT_HTML;
+    }
+    return DEFAULT_HTML;
+  });
   const [md, setMd] = useState(DEFAULT_MD);
+
+  // Persist html to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem(LS_KEY, html);
+  }, [html]);
 
   async function startCall() {
     setCallState("loading");
