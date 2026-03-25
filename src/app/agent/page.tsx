@@ -1,63 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, useMemo } from "react";
 import { DEFAULT_HTML } from "@/lib/defaultHtml";
+import hljs from "highlight.js/lib/core";
+import xml from "highlight.js/lib/languages/xml";
+import "highlight.js/styles/atom-one-dark.css";
+
+hljs.registerLanguage("html", xml);
 
 const LS_KEY = "editor_html";
-
-// ─── Markdown renderer ────────────────────────────────────────────────────────
-
-function renderMarkdown(md: string): string {
-  const html = md
-    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-    .replace(/```[\w]*\n([\s\S]*?)```/g, "<pre><code>$1</code></pre>")
-    .replace(/`([^`]+)`/g, "<code>$1</code>")
-    .replace(/^### (.+)$/gm, "<h3>$1</h3>")
-    .replace(/^## (.+)$/gm, "<h2>$1</h2>")
-    .replace(/^# (.+)$/gm, "<h1>$1</h1>")
-    .replace(/^> (.+)$/gm, "<blockquote>$1</blockquote>")
-    .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
-    .replace(/_([^_]+)_/g, "<em>$1</em>")
-    .replace(/^\- (.+)$/gm, "<li>$1</li>")
-    .replace(/(<li>[\s\S]+?<\/li>)(\n(?!<li>)|$)/g, "<ul>$1</ul>")
-    .replace(/^(?!<[hupbl])(.+)$/gm, "<p>$1</p>")
-    .replace(/<p><\/p>/g, "");
-
-  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
-    body { font-family: system-ui, sans-serif; max-width: 680px; margin: 2rem auto; padding: 0 1rem; color: #111; line-height: 1.6; }
-    h1,h2,h3 { font-weight: 600; margin-top: 1.5rem; }
-    code { background: #f0f0f0; padding: .15em .35em; border-radius: 4px; font-size: .9em; }
-    pre { background: #f0f0f0; padding: 1rem; border-radius: 6px; overflow-x: auto; }
-    pre code { background: none; padding: 0; }
-    blockquote { border-left: 3px solid #ccc; margin: 0; padding-left: 1rem; color: #555; }
-    ul { padding-left: 1.5rem; }
-  </style></head><body>${html}</body></html>`;
-}
+const LS_PROMPT_KEY = "editor_prompt";
 
 // ─── Defaults ─────────────────────────────────────────────────────────────────
 
 const DEFAULT_PROMPT = `You are John, an on-call engineer. Start every conversation by greeting the user with "What's up, I'm John, the on-call engineer." Then be helpful, direct, and conversational.`;
 
-
-const DEFAULT_MD = `# My Document
-
-## Introduction
-
-Write **bold**, _italic_, or \`inline code\` here.
-
-## List
-
-- Item one
-- Item two
-- Item three
-
-> Blockquotes work too.
-`;
-
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type CallState = "idle" | "loading" | "active" | "ended";
-type EditorTab = "code" | "markdown" | "preview";
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
@@ -82,29 +42,71 @@ export default function AgentPage() {
   const [hangingUp, setHangingUp] = useState(false);
   const [promptOpen, setPromptOpen] = useState(false);
   const [prompt, setPrompt] = useState(DEFAULT_PROMPT);
+  const [savedPrompt, setSavedPrompt] = useState(DEFAULT_PROMPT);
+
+  useLayoutEffect(() => {
+    const saved = localStorage.getItem(LS_PROMPT_KEY);
+    if (saved) {
+      setPrompt(saved);
+      setSavedPrompt(saved);
+    }
+  }, []);
+
+  const promptIsDirty = prompt !== savedPrompt;
+
+  function savePrompt() {
+    localStorage.setItem(LS_PROMPT_KEY, prompt);
+    setSavedPrompt(prompt);
+  }
 
   // Editor state
-  const [tab, setTab] = useState<EditorTab>("code");
   const [html, setHtml] = useState(() => {
     if (typeof window !== "undefined") {
       return localStorage.getItem(LS_KEY) ?? DEFAULT_HTML;
     }
     return DEFAULT_HTML;
   });
-  const [md, setMd] = useState(DEFAULT_MD);
 
-  // Persist html to localStorage whenever it changes
+  // Persist html to localStorage whenever it changes, with saved indicator
+  const [showSaved, setShowSaved] = useState(false);
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   useEffect(() => {
     localStorage.setItem(LS_KEY, html);
+    setShowSaved(false);
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => setShowSaved(true), 700);
+    return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current); };
   }, [html]);
+
+  // Syntax highlighting
+  const highlighted = useMemo(
+    () => hljs.highlight(html, { language: "html" }).value,
+    [html]
+  );
+
+  // Textarea / pre scroll sync
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const preRef = useRef<HTMLPreElement>(null);
+
+  function syncScroll() {
+    if (textareaRef.current && preRef.current) {
+      preRef.current.scrollTop = textareaRef.current.scrollTop;
+      preRef.current.scrollLeft = textareaRef.current.scrollLeft;
+    }
+  }
 
   async function startCall() {
     setCallState("loading");
     setError(null);
+    const currentPrompt =
+      typeof window !== "undefined"
+        ? (localStorage.getItem(LS_PROMPT_KEY) ?? prompt)
+        : prompt;
     const res = await fetch("/api/tavus", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ system_prompt: prompt }),
+      body: JSON.stringify({ system_prompt: currentPrompt }),
     });
     const data = await res.json();
     if (!res.ok) {
@@ -130,12 +132,6 @@ export default function AgentPage() {
     setTempPersonaId(null);
   }
 
-  const editorTabs: { id: EditorTab; label: string }[] = [
-    { id: "code", label: "Code" },
-    { id: "markdown", label: "Markdown" },
-    { id: "preview", label: "Preview" },
-  ];
-
   if (splash) {
     return (
       <div className="flex h-[calc(100vh-57px)] w-full items-center justify-center bg-[#f7f7f7] select-none">
@@ -146,11 +142,7 @@ export default function AgentPage() {
             <path d="M14 26a4 4 0 0 1 4-4h24a4 4 0 0 1 4 4v20a4 4 0 0 1-4 4H18a4 4 0 0 1-4-4V26z" fill="white"/>
             <path d="M46 30.5l12-7v25l-12-7V30.5z" fill="white"/>
           </svg>
-
-          {/* Wordmark */}
           <span className="text-5xl font-bold tracking-tight text-[#2D8CFF]" style={{ fontFamily: "system-ui, sans-serif" }}>zoom</span>
-
-          {/* Loading dots */}
           <div className="flex items-center gap-1.5 mt-1">
             {[0, 1, 2].map((i) => (
               <span
@@ -160,9 +152,7 @@ export default function AgentPage() {
               />
             ))}
           </div>
-
-          {/* Status */}
-          <p className="text-[#555] text-sm tracking-wide">Waking up engineer on call...</p>
+          <p className="text-[#555] text-sm tracking-wide">Waking up the engineer on call...</p>
         </div>
       </div>
     );
@@ -174,7 +164,7 @@ export default function AgentPage() {
       {/* ── Left: Agent ── */}
       <div className="w-1/2 flex flex-col border-r border-neutral-200 overflow-hidden">
 
-        {/* Main content — fills all available height */}
+        {/* Main content */}
         <div className="flex-1 flex flex-col overflow-hidden">
           {callState === "idle" && (
             <div className="flex-1 flex flex-col items-center justify-center gap-4 px-8">
@@ -218,13 +208,13 @@ export default function AgentPage() {
 
           {callState === "active" && conversationUrl && (
             <div className="flex-1 flex flex-col overflow-hidden">
-              <div className="flex-1 relative overflow-hidden flex flex-col">
-              <iframe
-                src={conversationUrl}
-                allow="camera *; microphone *; autoplay *; display-capture *; speaker *; fullscreen *; clipboard-write *"
-                className="flex-1 w-full border-0"
-                title="Tavus Agent"
-              />
+              <div className="flex-1 relative overflow-hidden">
+                <iframe
+                  src={conversationUrl}
+                  allow="camera *; microphone *; autoplay *; display-capture *; speaker *; fullscreen *; clipboard-write *"
+                  className="absolute inset-0 w-full h-full border-0"
+                  title="Tavus Agent"
+                />
               </div>
               <div className="flex justify-center items-center py-3 shrink-0 border-t border-neutral-200">
                 <button
@@ -263,7 +253,12 @@ export default function AgentPage() {
             onClick={() => setPromptOpen((o) => !o)}
             className="w-full flex items-center justify-between px-4 py-3 text-sm text-neutral-600 hover:bg-neutral-50 transition-colors"
           >
-            <span className="font-medium">System prompt</span>
+            <div className="flex items-center gap-2">
+              <span className="font-medium">System prompt</span>
+              {promptIsDirty && (
+                <span className="w-2 h-2 rounded-full bg-blue-500" />
+              )}
+            </div>
             <svg className={`w-4 h-4 transition-transform ${promptOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
             </svg>
@@ -276,80 +271,108 @@ export default function AgentPage() {
                 rows={5}
                 className="w-full text-sm font-mono text-neutral-800 bg-neutral-50 border border-neutral-200 rounded-md p-3 resize-none focus:outline-none focus:ring-1 focus:ring-black"
               />
-              <button onClick={() => setPrompt(DEFAULT_PROMPT)} className="self-end text-xs text-neutral-400 hover:text-neutral-600 transition-colors">
-                Reset to default
-              </button>
+              <div className="flex items-center justify-between">
+                <button
+                  onClick={() => { setPrompt(DEFAULT_PROMPT); }}
+                  className="text-xs text-neutral-400 hover:text-neutral-600 transition-colors"
+                >
+                  Reset to default
+                </button>
+                {promptIsDirty && (
+                  <button
+                    onClick={savePrompt}
+                    className="save-glow px-3 py-1.5 bg-blue-500 text-white text-xs font-semibold rounded-md hover:bg-blue-400 transition-colors"
+                  >
+                    Save
+                  </button>
+                )}
+              </div>
             </div>
           )}
         </div>
       </div>
 
-      {/* ── Right: Editor ── */}
-      <div className="w-1/2 flex flex-col bg-neutral-950 overflow-hidden">
-        {/* Tab bar */}
-        <div className="flex items-center gap-0 border-b border-neutral-800 px-3 pt-2 shrink-0">
-          {editorTabs.map(({ id, label }) => (
-            <button
-              key={id}
-              onClick={() => setTab(id)}
-              className={`px-4 py-2 text-sm font-medium rounded-t transition-colors ${
-                tab === id
-                  ? "bg-neutral-900 text-white border border-b-0 border-neutral-700"
-                  : "text-neutral-500 hover:text-neutral-300"
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-          <div className="ml-auto pb-2">
-            {tab === "code" && (
-              <button onClick={() => setHtml(DEFAULT_HTML)} className="text-xs text-neutral-600 hover:text-neutral-400 transition-colors">Reset</button>
-            )}
-            {tab === "markdown" && (
-              <button onClick={() => setMd(DEFAULT_MD)} className="text-xs text-neutral-600 hover:text-neutral-400 transition-colors">Reset</button>
-            )}
+      {/* ── Right: Code Editor ── */}
+      <div className="w-1/2 flex flex-col bg-[#282c34] overflow-hidden">
+
+        {/* Browser chrome */}
+        <div className="shrink-0 bg-neutral-800 border-b border-neutral-700 px-3 py-2.5">
+          <div className="flex items-center gap-3">
+            {/* Window control dots */}
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-full bg-[#ff5f57]" />
+              <div className="w-3 h-3 rounded-full bg-[#febc2e]" />
+              <div className="w-3 h-3 rounded-full bg-[#28c840]" />
+            </div>
+            {/* URL bar */}
+            <div className="flex-1 flex justify-center">
+              <div className="bg-neutral-700/70 rounded-md px-4 py-0.5 text-xs text-neutral-400 font-mono w-48 text-center select-none">
+                index.html
+              </div>
+            </div>
+            {/* Saved indicator + Reset */}
+            <div className="flex items-center gap-3">
+              <span
+                className="flex items-center gap-1 text-xs text-green-400 transition-opacity duration-300"
+                style={{ opacity: showSaved ? 1 : 0 }}
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                </svg>
+                Changes saved
+              </span>
+              <button
+                onClick={() => setHtml(DEFAULT_HTML)}
+                className="text-xs text-neutral-600 hover:text-neutral-400 transition-colors"
+              >
+                Reset
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Code tab */}
-        {tab === "code" && (
+        {/* Syntax-highlighted code editor */}
+        <div
+          className="relative flex-1 overflow-hidden"
+          style={{ fontFamily: "'Menlo', 'Monaco', 'Consolas', monospace", fontSize: "13px", lineHeight: "1.6" }}
+        >
+          {/* Highlighted layer */}
+          <pre
+            ref={preRef}
+            className="hljs absolute inset-0 m-0 p-4 overflow-auto pointer-events-none"
+            style={{
+              background: "transparent",
+              whiteSpace: "pre",
+              wordWrap: "normal",
+              fontFamily: "inherit",
+              fontSize: "inherit",
+              lineHeight: "inherit",
+            }}
+            dangerouslySetInnerHTML={{ __html: highlighted + "\n" }}
+          />
+          {/* Editable textarea on top */}
           <textarea
-            className="flex-1 w-full bg-neutral-950 text-neutral-100 font-mono text-sm p-4 resize-none focus:outline-none leading-relaxed"
+            ref={textareaRef}
+            className="absolute inset-0 p-4 resize-none focus:outline-none"
+            style={{
+              background: "transparent",
+              color: "transparent",
+              caretColor: "#abb2bf",
+              whiteSpace: "pre",
+              wordWrap: "normal",
+              fontFamily: "inherit",
+              fontSize: "inherit",
+              lineHeight: "inherit",
+              overflow: "auto",
+            }}
             value={html}
             onChange={(e) => setHtml(e.target.value)}
+            onScroll={syncScroll}
             spellCheck={false}
             autoCapitalize="off"
             autoCorrect="off"
           />
-        )}
-
-        {/* Markdown tab */}
-        {tab === "markdown" && (
-          <div className="flex flex-1 overflow-hidden">
-            <textarea
-              className="flex-1 bg-neutral-950 text-neutral-100 font-mono text-sm p-4 resize-none focus:outline-none leading-relaxed border-r border-neutral-800"
-              value={md}
-              onChange={(e) => setMd(e.target.value)}
-              spellCheck={false}
-            />
-            <iframe
-              className="flex-1 bg-white"
-              srcDoc={renderMarkdown(md)}
-              sandbox="allow-scripts"
-              title="Markdown preview"
-            />
-          </div>
-        )}
-
-        {/* Preview tab */}
-        {tab === "preview" && (
-          <iframe
-            className="flex-1 w-full bg-white"
-            srcDoc={html}
-            sandbox="allow-scripts"
-            title="HTML preview"
-          />
-        )}
+        </div>
       </div>
     </div>
   );

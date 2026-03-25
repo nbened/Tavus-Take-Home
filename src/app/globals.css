@@ -6,3 +6,15 @@
   0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
   40% { transform: translateY(-6px); opacity: 1; }
 }
+
+@keyframes save-glow {
+  0%, 100% { box-shadow: 0 0 6px 1px rgba(59, 130, 246, 0.6); }
+  50% { box-shadow: 0 0 18px 5px rgba(59, 130, 246, 0.9); }
+}
+
+.save-glow {
+  animation: save-glow 1.4s ease-in-out infinite;
+}
+
+/* Override highlight.js background so our dark container shows through */
+.hljs { background: transparent !important; }

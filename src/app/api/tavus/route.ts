@@ -33,6 +33,7 @@ export async function POST(request: Request) {
       pipeline_mode: "full",
       layers: {
         llm: {
+          model: "tavus-gpt-oss",
           tools: [
             {
               type: "function",
@@ -60,6 +61,10 @@ export async function POST(request: Request) {
       const p = await pRes.json();
       personaId = p.persona_id;
       tempPersonaId = p.persona_id;
+      console.log("[tavus] persona created:", personaId);
+    } else {
+      const err = await pRes.text();
+      console.error("[tavus] persona creation failed:", pRes.status, err);
     }
   }
 
@@ -67,6 +72,7 @@ export async function POST(request: Request) {
     replica_id: replicaId,
     persona_id: personaId,
     conversation_name: "Agent Session",
+    callback_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/tavus/tool`,
     properties: { max_call_duration: 3600, enable_recording: false },
   });
 
