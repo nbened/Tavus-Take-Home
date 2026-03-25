@@ -1,0 +1,53 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;0,900;1,400;1,700&family=DM+Mono:wght@300;400;500&display=swap');
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --ink: #0a0a08;
+  --paper: #f4f0e8;
+  --amber: #e8a020;
+  --amber-dim: #c4841a;
+  --amber-glow: rgba(232, 160, 32, 0.15);
+  --charcoal: #1a1a16;
+  --ash: #2e2e28;
+  --fog: #6b6b60;
+  --mist: #a8a89a;
+  --cream: #ede9df;
+  --font-display: var(--font-playfair), 'Playfair Display', Georgia, serif;
+  --font-mono: var(--font-mono), 'DM Mono', 'Courier New', monospace;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: var(--amber);
+  color: var(--ink);
+}
+
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--ink);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--ash);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--amber);
+}
