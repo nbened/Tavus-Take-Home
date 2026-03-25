@@ -14,7 +14,7 @@ export function removeClient(ctrl: Controller) {
 export function broadcast(event: string, data: unknown) {
   const payload = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
   const encoded = new TextEncoder().encode(payload);
-  for (const ctrl of clients) {
+  for (const ctrl of Array.from(clients)) {
     try {
       ctrl.enqueue(encoded);
     } catch {
