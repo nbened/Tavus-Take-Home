@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState, useMemo } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { DEFAULT_HTML } from "@/lib/defaultHtml";
 import hljs from "highlight.js/lib/core";
 import xml from "highlight.js/lib/languages/xml";
@@ -9,11 +9,26 @@ import "highlight.js/styles/atom-one-dark.css";
 hljs.registerLanguage("html", xml);
 
 const LS_KEY = "editor_html";
-const LS_PROMPT_KEY = "editor_prompt";
 
 // ─── Defaults ─────────────────────────────────────────────────────────────────
 
-const DEFAULT_PROMPT = `You are John, an on-call engineer. Start every conversation by greeting the user with "What's up, I'm John, the on-call engineer." Then be helpful, direct, and conversational.`;
+function buildPrompt(code: string): string {
+  return `You are John, on-call engineer at Joja Corp.
+Your personality: Upbeat, helpful, genuinely amused this keeps happening. Like a senior engineer who actually likes showing the new person around.
+The situation: Joja Corp is famous for never getting a new employee's name wrong. They've gotten it wrong every single time. You find this funny more than frustrating.
+The code you're both looking at:
+\`\`\`html
+${code}
+\`\`\`
+Tutorial flow — wait for the user at each step before moving on:
+Step 1 — Find the bad line
+Introduce yourself warmly. Mention this name thing happens constantly — "you'd think statistically we'd guess someone's name right by now." Tell them the good news: they get to write their first line of code for the company today. Ask them to open the editor and hit Ctrl+F and search for "Welcome to Joja Mart" to find the bad line. Wait for them to confirm they found it.
+Step 2 — Change the name
+Tell them to replace the wrong name with their actual name right there in the code. Wait for them to confirm they've done it.
+Step 3 — Save and celebrate
+Tell them it saves automatically. The page will update. They just shipped their first fix to the Joja Corp codebase. Be genuinely proud. Encourage them to hang up and check it out.
+Important: Only mention your name being listed as Harold if the user brings it up first. If they do, laugh it off — "yeah, they get that wrong too."`;
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -41,24 +56,6 @@ export default function AgentPage() {
   const [killing, setKilling] = useState(false);
   const [hangingUp, setHangingUp] = useState(false);
   const [editorOpen, setEditorOpen] = useState(false);
-  const [promptOpen, setPromptOpen] = useState(false);
-  const [prompt, setPrompt] = useState(DEFAULT_PROMPT);
-  const [savedPrompt, setSavedPrompt] = useState(DEFAULT_PROMPT);
-
-  useLayoutEffect(() => {
-    const saved = localStorage.getItem(LS_PROMPT_KEY);
-    if (saved) {
-      setPrompt(saved);
-      setSavedPrompt(saved);
-    }
-  }, []);
-
-  const promptIsDirty = prompt !== savedPrompt;
-
-  function savePrompt() {
-    localStorage.setItem(LS_PROMPT_KEY, prompt);
-    setSavedPrompt(prompt);
-  }
 
   // Editor state
   const [html, setHtml] = useState(() => {
@@ -100,14 +97,11 @@ export default function AgentPage() {
   async function startCall() {
     setCallState("loading");
     setError(null);
-    const currentPrompt =
-      typeof window !== "undefined"
-        ? (localStorage.getItem(LS_PROMPT_KEY) ?? prompt)
-        : prompt;
+    const currentHtml = localStorage.getItem(LS_KEY) ?? DEFAULT_HTML;
     const res = await fetch("/api/tavus", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ system_prompt: currentPrompt }),
+      body: JSON.stringify({ system_prompt: buildPrompt(currentHtml) }),
     });
     const data = await res.json();
     if (!res.ok) {
@@ -248,49 +242,6 @@ export default function AgentPage() {
           )}
         </div>
 
-        {/* System prompt — pinned to bottom */}
-        <div className="shrink-0 border-t border-neutral-200">
-          <button
-            onClick={() => setPromptOpen((o) => !o)}
-            className="w-full flex items-center justify-between px-4 py-3 text-sm text-neutral-600 hover:bg-neutral-50 transition-colors"
-          >
-            <div className="flex items-center gap-2">
-              <span className="font-medium">System prompt</span>
-              {promptIsDirty && (
-                <span className="w-2 h-2 rounded-full bg-blue-500" />
-              )}
-            </div>
-            <svg className={`w-4 h-4 transition-transform ${promptOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
-          {promptOpen && (
-            <div className="border-t border-neutral-200 p-3 flex flex-col gap-2">
-              <textarea
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                rows={5}
-                className="w-full text-sm font-mono text-neutral-800 bg-neutral-50 border border-neutral-200 rounded-md p-3 resize-none focus:outline-none focus:ring-1 focus:ring-black"
-              />
-              <div className="flex items-center justify-between">
-                <button
-                  onClick={() => { setPrompt(DEFAULT_PROMPT); }}
-                  className="text-xs text-neutral-400 hover:text-neutral-600 transition-colors"
-                >
-                  Reset to default
-                </button>
-                {promptIsDirty && (
-                  <button
-                    onClick={savePrompt}
-                    className="save-glow px-3 py-1.5 bg-blue-500 text-white text-xs font-semibold rounded-md hover:bg-blue-400 transition-colors"
-                  >
-                    Save
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
       </div>
 
       {/* ── Right: Code Editor ── */}
