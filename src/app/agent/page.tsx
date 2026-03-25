@@ -233,7 +233,7 @@ export default function AgentPage() {
                     setHangingUp(true);
                     await endCall();
                     sessionStorage.setItem("scrollToOnboarding", "1");
-                    window.location.href = "/";
+                    window.location.href = "/?isRetry=true";
                   }}
                   className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                 >
