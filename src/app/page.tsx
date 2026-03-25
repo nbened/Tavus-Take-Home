@@ -102,7 +102,7 @@ export default function Home() {
             <span className="text-blue-600">Joja Mart</span>
           </h1>
           <p className="text-neutral-500 text-sm max-w-sm">
-            Joja Mart is a global corporation renown for getting their new employee&apos;s names right
+            Joja Mart <span className="text-blue-600">never</span> gets names wrong. That's a promise.
           </p>
         </div>
         <button
