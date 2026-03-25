@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { broadcast } from "@/lib/sse";
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
@@ -10,7 +10,7 @@ export async function POST(request: Request) {
   if (name === "switch_tab") {
     const tab = params?.tab;
     if (tab === "code" || tab === "markdown" || tab === "preview") {
-      await supabase.from("tab_state").upsert({ id: 1, current_tab: tab });
+      broadcast("switch_tab", { tab });
     }
   }
 

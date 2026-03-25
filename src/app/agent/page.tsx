@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { DEFAULT_HTML } from "@/lib/defaultHtml";
 
 const LS_KEY = "editor_html";
 
@@ -37,42 +38,6 @@ function renderMarkdown(md: string): string {
 
 const DEFAULT_PROMPT = `You are John, an on-call engineer. Start every conversation by greeting the user with "What's up, I'm John, the on-call engineer." Then be helpful, direct, and conversational.`;
 
-const DEFAULT_HTML = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: system-ui, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      background: #fafafa;
-      color: #111;
-      gap: 1rem;
-      padding: 2rem;
-      text-align: center;
-    }
-    .badge {
-      font-size: 0.7rem;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: #999;
-      font-weight: 500;
-    }
-    h1 { font-size: 2.5rem; font-weight: 700; }
-    p { color: #666; max-width: 420px; line-height: 1.65; }
-  </style>
-</head>
-<body>
-  <span class="badge">Onboarding</span>
-  <h1>Welcome to the team, Jack 👋</h1>
-  <p>We're glad to have you here. Explore the docs, set up your environment, and don't hesitate to reach out if you need anything.</p>
-</body>
-</html>`;
 
 const DEFAULT_MD = `# My Document
 
@@ -97,6 +62,16 @@ type EditorTab = "code" | "markdown" | "preview";
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function AgentPage() {
+  // Zoom splash
+  const [splash, setSplash] = useState(true);
+
+  useEffect(() => {
+    startCall();
+    const timer = setTimeout(() => setSplash(false), 3000);
+    return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Agent state
   const [callState, setCallState] = useState<CallState>("idle");
   const [conversationUrl, setConversationUrl] = useState<string | null>(null);
@@ -158,6 +133,38 @@ export default function AgentPage() {
     { id: "markdown", label: "Markdown" },
     { id: "preview", label: "Preview" },
   ];
+
+  if (splash) {
+    return (
+      <div className="flex h-[calc(100vh-57px)] w-full items-center justify-center bg-[#f7f7f7] select-none">
+        <div className="flex flex-col items-center gap-5">
+          {/* Zoom camera icon */}
+          <svg width="72" height="72" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="72" height="72" rx="16" fill="#2D8CFF"/>
+            <path d="M14 26a4 4 0 0 1 4-4h24a4 4 0 0 1 4 4v20a4 4 0 0 1-4 4H18a4 4 0 0 1-4-4V26z" fill="white"/>
+            <path d="M46 30.5l12-7v25l-12-7V30.5z" fill="white"/>
+          </svg>
+
+          {/* Wordmark */}
+          <span className="text-5xl font-bold tracking-tight text-[#2D8CFF]" style={{ fontFamily: "system-ui, sans-serif" }}>zoom</span>
+
+          {/* Loading dots */}
+          <div className="flex items-center gap-1.5 mt-1">
+            {[0, 1, 2].map((i) => (
+              <span
+                key={i}
+                className="block w-2 h-2 rounded-full bg-[#2D8CFF]"
+                style={{ animation: `bounce-dot 1.2s ease-in-out ${i * 0.2}s infinite` }}
+              />
+            ))}
+          </div>
+
+          {/* Status */}
+          <p className="text-[#555] text-sm tracking-wide">Waking up engineer on call...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-[calc(100vh-57px)] w-full overflow-hidden">
