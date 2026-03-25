@@ -94,19 +94,22 @@ export default function Home() {
     <div className="overflow-y-scroll h-[calc(100vh-57px)] snap-y snap-mandatory">
 
       {/* ── Section 1: Hero ── */}
-      <section className="snap-start h-[calc(100vh-57px)] flex flex-col items-center justify-center gap-6 bg-white px-6 text-center">
-        <h1 className="text-3xl font-semibold tracking-tight max-w-lg">
-          You&apos;ve just been hired on as the newest member of{" "}
-          <span className="text-blue-600">Joja Mart</span>
-        </h1>
-        <p className="text-neutral-500 text-sm max-w-sm">
-          Joja Mart is a global corporation renown for getting their new employee&apos;s names right
-        </p>
+      <section className="snap-start h-[calc(100vh-57px)] flex flex-col items-center justify-between bg-white px-6 text-center py-16">
+        <div />
+        <div className="flex flex-col items-center gap-6">
+          <h1 className="text-3xl font-semibold tracking-tight max-w-lg">
+            You&apos;ve just been hired on as the newest member of{" "}
+            <span className="text-blue-600">Joja Mart</span>
+          </h1>
+          <p className="text-neutral-500 text-sm max-w-sm">
+            Joja Mart is a global corporation renown for getting their new employee&apos;s names right
+          </p>
+        </div>
         <button
           onClick={scrollToOnboarding}
           className="px-4 py-2 bg-black text-white text-sm font-medium rounded-md hover:bg-neutral-800 transition-colors"
         >
-          Start demo ↓
+          Continue ↓
         </button>
       </section>
 
