@@ -19,7 +19,7 @@ export async function POST(request: Request) {
   }
 
   const { system_prompt } = await request.json().catch(() => ({}));
-  const replicaId = process.env.TAVUS_REPLICA_ID ?? "rdd4c86e5e1a";
+  const replicaId = process.env.TAVUS_REPLICA_ID ?? "r874cc5f8a3b";
 
   // Create a temporary persona if a custom prompt was provided
   let personaId = process.env.TAVUS_PERSONA_ID ?? "pdac61133ac5";
@@ -32,29 +32,7 @@ export async function POST(request: Request) {
       default_replica_id: replicaId,
       pipeline_mode: "full",
       layers: {
-        llm: {
-          model: "tavus-gpt-oss",
-          tools: [
-            {
-              type: "function",
-              function: {
-                name: "switch_tab",
-                description: "Switch the editor tab on the right side of the screen to the specified tab.",
-                parameters: {
-                  type: "object",
-                  properties: {
-                    tab: {
-                      type: "string",
-                      enum: ["code", "markdown", "preview"],
-                      description: "The tab to switch to.",
-                    },
-                  },
-                  required: ["tab"],
-                },
-              },
-            },
-          ],
-        },
+        llm: { model: "tavus-gpt-oss" },
       },
     });
     if (pRes.ok) {
@@ -72,7 +50,6 @@ export async function POST(request: Request) {
     replica_id: replicaId,
     persona_id: personaId,
     conversation_name: "Agent Session",
-    callback_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/tavus/tool`,
     properties: { max_call_duration: 3600, enable_recording: false },
   });
 

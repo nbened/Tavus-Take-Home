@@ -24,7 +24,7 @@ export const DEFAULT_HTML = `<!DOCTYPE html>
 </head>
 <body>
   <span class="badge">Onboarding</span>
-  <h1>Welcome to the team, Nic 👋</h1>
+  <h1>Welcome to Joja Mart, Nic 👋</h1>
   <p>Before we get started with your onboarding, is there anything wrong on this page?</p>
 </body>
 </html>`;

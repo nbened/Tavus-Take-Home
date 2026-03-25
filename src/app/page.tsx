@@ -6,13 +6,57 @@ import confetti from "canvas-confetti";
 
 const LS_KEY = "editor_html";
 
+function IframeWithFallback({ html }: { html: string | null }) {
+  const [iframeKey, setIframeKey] = useState(0);
+  const [loaded, setLoaded] = useState(false);
+  const [showRefresh, setShowRefresh] = useState(false);
+
+  useEffect(() => {
+    if (!html) return;
+    setLoaded(false);
+    setShowRefresh(false);
+    const timer = setTimeout(() => setShowRefresh(true), 2500);
+    return () => clearTimeout(timer);
+  }, [html, iframeKey]);
+
+  if (!html) return null;
+
+  if (showRefresh && !loaded) {
+    return (
+      <div className="w-full h-full flex flex-col items-center justify-center gap-4 bg-neutral-50">
+        <p className="text-neutral-400 text-sm">Page didn&apos;t load</p>
+        <button
+          onClick={() => setIframeKey((k) => k + 1)}
+          className="flex items-center gap-2 px-4 py-2 bg-black text-white text-sm font-medium rounded-md hover:bg-neutral-800 transition-colors"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          Refresh page
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <iframe
+      key={iframeKey}
+      className="w-full h-full border-0"
+      srcDoc={html}
+      sandbox="allow-scripts"
+      title="Onboarding page"
+      onLoad={() => setLoaded(true)}
+    />
+  );
+}
+
 export default function Home() {
   const onboardingRef = useRef<HTMLDivElement>(null);
 
-  const [pageHtml, setPageHtml] = useState<string>(DEFAULT_HTML);
+  const [pageHtml, setPageHtml] = useState<string | null>(null);
   useLayoutEffect(() => {
     const saved = localStorage.getItem(LS_KEY);
-    if (saved) setPageHtml(saved);
+    setPageHtml(saved ?? DEFAULT_HTML);
   }, []);
 
   useEffect(() => {
@@ -71,12 +115,7 @@ export default function Home() {
         ref={onboardingRef}
         className="snap-start h-[calc(100vh-57px)] relative overflow-hidden"
       >
-        <iframe
-          className="w-full h-full border-0"
-          srcDoc={pageHtml}
-          sandbox="allow-scripts"
-          title="Onboarding page"
-        />
+        <IframeWithFallback html={pageHtml} />
 
         <div className="absolute bottom-6 right-6 z-10 flex items-center gap-3">
           {isRetry && (
