@@ -26,6 +26,13 @@ export default function Home() {
     onboardingRef.current?.scrollIntoView({ behavior: "smooth" });
   }
 
+  useEffect(() => {
+    if (sessionStorage.getItem("scrollToOnboarding")) {
+      sessionStorage.removeItem("scrollToOnboarding");
+      setTimeout(() => onboardingRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+    }
+  }, []);
+
   return (
     <div className="overflow-y-scroll h-[calc(100vh-57px)] snap-y snap-mandatory">
 
@@ -63,7 +70,7 @@ export default function Home() {
             onClick={() => window.open("/agent", "_blank")}
             className="px-5 py-2.5 bg-red-600 text-white text-sm font-semibold rounded-lg hover:bg-red-700 transition-colors shadow-lg"
           >
-            My name is not Steve
+            My name is wrong
           </button>
         </div>
       </section>

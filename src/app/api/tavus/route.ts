@@ -27,7 +27,7 @@ export async function POST(request: Request) {
 
   if (system_prompt?.trim()) {
     const pRes = await tavus("/v2/personas", "POST", {
-      persona_name: `temp-${Date.now()}`,
+      persona_name: "Harold",
       system_prompt: system_prompt.trim(),
       default_replica_id: replicaId,
       pipeline_mode: "full",

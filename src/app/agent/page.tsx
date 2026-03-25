@@ -78,6 +78,8 @@ export default function AgentPage() {
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [tempPersonaId, setTempPersonaId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [killing, setKilling] = useState(false);
+  const [hangingUp, setHangingUp] = useState(false);
   const [promptOpen, setPromptOpen] = useState(false);
   const [prompt, setPrompt] = useState(DEFAULT_PROMPT);
 
@@ -170,107 +172,116 @@ export default function AgentPage() {
     <div className="flex h-[calc(100vh-57px)] w-full overflow-hidden">
 
       {/* ── Left: Agent ── */}
-      <div className="w-1/2 flex flex-col items-center justify-center gap-6 px-8 py-8 border-r border-neutral-200 overflow-y-auto">
+      <div className="w-1/2 flex flex-col border-r border-neutral-200 overflow-hidden">
 
-        {callState === "idle" && (
-          <div className="flex flex-col items-center gap-4 w-full max-w-lg">
-            <div className="flex flex-col items-center gap-1">
+        {/* Main content — fills all available height */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {callState === "idle" && (
+            <div className="flex-1 flex flex-col items-center justify-center gap-4 px-8">
               <h1 className="text-2xl font-semibold tracking-tight">AI Video Agent</h1>
               <p className="text-neutral-400 text-sm">Start a live video conversation.</p>
-            </div>
-            <button
-              onClick={startCall}
-              className="px-5 py-2.5 bg-black text-white text-sm font-medium rounded-md hover:bg-neutral-800 transition-colors"
-            >
-              Join Call
-            </button>
-            {error && <p className="text-red-500 text-sm">{error}</p>}
-            <div className="w-full border border-neutral-200 rounded-lg overflow-hidden">
               <button
-                onClick={() => setPromptOpen((o) => !o)}
-                className="w-full flex items-center justify-between px-4 py-3 text-sm text-neutral-600 hover:bg-neutral-50 transition-colors"
+                onClick={startCall}
+                className="px-5 py-2.5 bg-black text-white text-sm font-medium rounded-md hover:bg-neutral-800 transition-colors"
               >
-                <span className="font-medium">System prompt</span>
-                <svg className={`w-4 h-4 transition-transform ${promptOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
+                Join Call
               </button>
-              {promptOpen && (
-                <div className="border-t border-neutral-200 p-3 flex flex-col gap-2">
-                  <textarea
-                    value={prompt}
-                    onChange={(e) => setPrompt(e.target.value)}
-                    rows={6}
-                    className="w-full text-sm font-mono text-neutral-800 bg-neutral-50 border border-neutral-200 rounded-md p-3 resize-y focus:outline-none focus:ring-1 focus:ring-black"
-                  />
-                  <button onClick={() => setPrompt(DEFAULT_PROMPT)} className="self-end text-xs text-neutral-400 hover:text-neutral-600 transition-colors">
-                    Reset to default
-                  </button>
+              {error && (
+                <div className="flex flex-col items-center gap-2">
+                  <p className="text-red-500 text-sm">{error}</p>
+                  {error.includes("maximum concurrent") && (
+                    <button
+                      disabled={killing}
+                      onClick={async () => {
+                        setKilling(true);
+                        await fetch("/api/tavus/killall", { method: "POST" });
+                        setKilling(false);
+                        setError(null);
+                      }}
+                      className="flex items-center gap-2 px-3 py-1.5 bg-red-600 text-white text-xs font-medium rounded-md hover:bg-red-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      {killing && <span className="w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin" />}
+                      {killing ? "Killing sessions…" : "Kill active sessions"}
+                    </button>
+                  )}
                 </div>
               )}
             </div>
-          </div>
-        )}
+          )}
 
-        {callState === "loading" && (
-          <div className="flex flex-col items-center gap-3">
-            <div className="w-5 h-5 border-2 border-neutral-300 border-t-black rounded-full animate-spin" />
-            <p className="text-neutral-400 text-sm">Connecting…</p>
-          </div>
-        )}
+          {callState === "loading" && (
+            <div className="flex-1 flex flex-col items-center justify-center gap-3">
+              <div className="w-5 h-5 border-2 border-neutral-300 border-t-black rounded-full animate-spin" />
+              <p className="text-neutral-400 text-sm">Connecting…</p>
+            </div>
+          )}
 
-        {callState === "active" && conversationUrl && (
-          <div className="flex flex-col items-center gap-4 w-full max-w-lg">
-            <div className="w-full rounded-xl overflow-hidden border border-neutral-200 shadow-sm bg-black aspect-video">
+          {callState === "active" && conversationUrl && (
+            <div className="flex-1 flex flex-col overflow-hidden">
+              <div className="flex-1 relative overflow-hidden flex flex-col">
               <iframe
                 src={conversationUrl}
                 allow="camera *; microphone *; autoplay *; display-capture *; speaker *; fullscreen *; clipboard-write *"
-                className="w-full h-full"
+                className="flex-1 w-full border-0"
                 title="Tavus Agent"
               />
+              </div>
+              <div className="flex justify-center items-center py-3 shrink-0 border-t border-neutral-200">
+                <button
+                  disabled={hangingUp}
+                  onClick={async () => {
+                    setHangingUp(true);
+                    await endCall();
+                    sessionStorage.setItem("scrollToOnboarding", "1");
+                    window.location.href = "/";
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {hangingUp && <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />}
+                  Hang up and test changes
+                </button>
+              </div>
             </div>
-            <button
-              onClick={endCall}
-              className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 transition-colors"
-            >
-              End Call
-            </button>
-            <div className="w-full border border-neutral-200 rounded-lg overflow-hidden">
-              <button
-                onClick={() => setPromptOpen((o) => !o)}
-                className="w-full flex items-center justify-between px-4 py-3 text-sm text-neutral-600 hover:bg-neutral-50 transition-colors"
-              >
-                <span className="font-medium">System prompt</span>
-                <svg className={`w-4 h-4 transition-transform ${promptOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-              {promptOpen && (
-                <div className="border-t border-neutral-200 p-3">
-                  <p className="text-xs text-neutral-400 mb-2">Changes take effect on the next call.</p>
-                  <textarea
-                    value={prompt}
-                    onChange={(e) => setPrompt(e.target.value)}
-                    rows={6}
-                    className="w-full text-sm font-mono text-neutral-800 bg-neutral-50 border border-neutral-200 rounded-md p-3 resize-y focus:outline-none focus:ring-1 focus:ring-black"
-                  />
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+          )}
 
-        {callState === "ended" && (
-          <div className="flex flex-col items-center gap-4">
-            <p className="text-neutral-500 text-sm">Call ended.</p>
-            <button
-              onClick={() => setCallState("idle")}
-              className="px-4 py-2 bg-black text-white text-sm font-medium rounded-md hover:bg-neutral-800 transition-colors"
-            >
-              Start New Call
-            </button>
-          </div>
-        )}
+          {callState === "ended" && (
+            <div className="flex-1 flex flex-col items-center justify-center gap-4">
+              <p className="text-neutral-500 text-sm">Call ended.</p>
+              <button
+                onClick={() => setCallState("idle")}
+                className="px-4 py-2 bg-black text-white text-sm font-medium rounded-md hover:bg-neutral-800 transition-colors"
+              >
+                Start New Call
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* System prompt — pinned to bottom */}
+        <div className="shrink-0 border-t border-neutral-200">
+          <button
+            onClick={() => setPromptOpen((o) => !o)}
+            className="w-full flex items-center justify-between px-4 py-3 text-sm text-neutral-600 hover:bg-neutral-50 transition-colors"
+          >
+            <span className="font-medium">System prompt</span>
+            <svg className={`w-4 h-4 transition-transform ${promptOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          {promptOpen && (
+            <div className="border-t border-neutral-200 p-3 flex flex-col gap-2">
+              <textarea
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                rows={5}
+                className="w-full text-sm font-mono text-neutral-800 bg-neutral-50 border border-neutral-200 rounded-md p-3 resize-none focus:outline-none focus:ring-1 focus:ring-black"
+              />
+              <button onClick={() => setPrompt(DEFAULT_PROMPT)} className="self-end text-xs text-neutral-400 hover:text-neutral-600 transition-colors">
+                Reset to default
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* ── Right: Editor ── */}
