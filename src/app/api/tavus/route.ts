@@ -31,6 +31,30 @@ export async function POST(request: Request) {
       system_prompt: system_prompt.trim(),
       default_replica_id: replicaId,
       pipeline_mode: "full",
+      layers: {
+        llm: {
+          tools: [
+            {
+              type: "function",
+              function: {
+                name: "switch_tab",
+                description: "Switch the editor tab on the right side of the screen to the specified tab.",
+                parameters: {
+                  type: "object",
+                  properties: {
+                    tab: {
+                      type: "string",
+                      enum: ["code", "markdown", "preview"],
+                      description: "The tab to switch to.",
+                    },
+                  },
+                  required: ["tab"],
+                },
+              },
+            },
+          ],
+        },
+      },
     });
     if (pRes.ok) {
       const p = await pRes.json();
