@@ -25,6 +25,6 @@ export const DEFAULT_HTML = `<!DOCTYPE html>
 <body>
   <span class="badge">Onboarding</span>
   <h1>Welcome to the team, <span style="color:#2563eb">Zxqvb</span> 👋</h1>
-  <p>As part of onboarding, <span style="color:#2563eb">you'll fix code with an engineer</span>. Anything wrong with this page?</p>
+  <p>As part of onboarding, <span style="color:#2563eb">you'll fix code with an engineer</span> — anything wrong with this page?</p>
 </body>
 </html>`;
