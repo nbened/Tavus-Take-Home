@@ -18,7 +18,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </Link>
           <div className="flex items-center gap-4">
             <a
-              href="https://youtu.be/vTcYAdG7HGU"
+              href="https://youtu.be/CTPCR3aVzaM"
               target="_blank"
               rel="noopener noreferrer"
               className="text-sm text-neutral-500 hover:text-black transition-colors"
