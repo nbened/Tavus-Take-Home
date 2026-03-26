@@ -16,14 +16,24 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Link href="/" className="text-sm font-medium text-black tracking-tight">
             nic tavus take home
           </Link>
-          <a
-            href="https://nictavus.notion.site/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm text-neutral-500 hover:text-black transition-colors"
-          >
-            How I Built This
-          </a>
+          <div className="flex items-center gap-4">
+            <a
+              href="https://youtu.be/vTcYAdG7HGU"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-neutral-500 hover:text-black transition-colors"
+            >
+              Demo Video
+            </a>
+            <a
+              href="https://nictavus.notion.site/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-neutral-500 hover:text-black transition-colors"
+            >
+              How I Built This
+            </a>
+          </div>
         </nav>
         {children}
       </body>

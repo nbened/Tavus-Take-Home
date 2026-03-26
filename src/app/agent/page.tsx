@@ -223,7 +223,7 @@ export default function AgentPage() {
                   className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   {hangingUp && <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />}
-                  Hang up and save changes
+                  Hang up and test changes
                 </button>
               </div>
             </div>
