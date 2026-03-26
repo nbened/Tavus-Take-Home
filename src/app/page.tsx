@@ -109,7 +109,7 @@ export default function Home() {
           onClick={scrollToOnboarding}
           className="px-4 py-2 bg-black text-white text-sm font-medium rounded-md hover:bg-neutral-800 transition-colors"
         >
-          Continue ↓
+          Continue to onboarding
         </button>
       </section>
 
