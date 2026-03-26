@@ -97,11 +97,11 @@ export default function Home() {
       <section className="snap-start h-[calc(100vh-57px)] flex flex-col items-center justify-between bg-white px-6 text-center py-16">
         <div />
         <div className="flex flex-col items-center gap-6">
-          <h1 className="text-3xl font-semibold tracking-tight max-w-lg">
+          <h1 className="text-5xl font-semibold tracking-tight max-w-lg">
             You&apos;ve just been hired on as the newest member of{" "}
-            <span className="text-blue-600">Joja Mart</span>
+            <span className="text-blue-600">Joja Mart</span>!
           </h1>
-          <p className="text-neutral-500 text-sm max-w-sm">
+          <p className="text-neutral-500 text-lg max-w-sm">
             Joja Mart is a made-up company. One that <span className="text-blue-600">never</span> gets anyone's name wrong. That's a promise.
           </p>
         </div>
@@ -110,6 +110,9 @@ export default function Home() {
           className="px-4 py-2 bg-black text-white text-sm font-medium rounded-md hover:bg-neutral-800 transition-colors"
         >
           Continue to onboarding
+          <svg className="w-4 h-4 ml-1 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
         </button>
       </section>
 

@@ -137,7 +137,7 @@ export default function AgentPage() {
               />
             ))}
           </div>
-          <p className="text-[#555] text-sm tracking-wide">Waking up the engineer on call...</p>
+          <p className="text-[#555] text-base tracking-wide">Waking up the engineer on call...</p>
         </div>
       </div>
     );
