@@ -123,7 +123,11 @@ export default function Home() {
         <div className="absolute bottom-6 right-6 z-10 flex items-center gap-3">
           {isRetry && (
             <button
-              onClick={fireConfetti}
+              onClick={() => {
+                fireConfetti();
+                setIsRetry(false);
+                window.history.replaceState({}, "", window.location.pathname);
+              }}
               className="flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700 transition-colors shadow-lg"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>

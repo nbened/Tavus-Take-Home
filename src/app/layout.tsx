@@ -14,7 +14,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="bg-white text-black min-h-screen">
         <nav className="border-b border-neutral-200 px-6 py-4 flex items-center justify-between">
           <Link href="/" className="text-sm font-medium text-black tracking-tight">
-            nic tavus take home
+            Tavus x Nic
           </Link>
           <div className="flex items-center gap-4">
             <a

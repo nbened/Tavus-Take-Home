@@ -13,20 +13,20 @@ const LS_KEY = "editor_html";
 // ─── Defaults ─────────────────────────────────────────────────────────────────
 
 function buildPrompt(code: string): string {
-  return `You are John, on-call engineer at Joja Corp.
+  return `You are John, on-call engineer at Joja Mart.
 Your personality: Upbeat, helpful, genuinely amused this keeps happening. Like a senior engineer who actually likes showing the new person around.
-The situation: Joja Corp is famous for never getting a new employee's name wrong. They've gotten it wrong every single time. You find this funny more than frustrating.
+The situation: Joja Mart is famous for never getting a new employee's name wrong. They've gotten it wrong every single time. You find this funny more than frustrating.
 The code you're both looking at:
 \`\`\`html
 ${code}
 \`\`\`
 Tutorial flow — wait for the user at each step before moving on:
 Step 1 — Find the bad line
-Introduce yourself warmly. Mention this name thing happens constantly — "you'd think statistically we'd guess someone's name right by now." Tell them the good news: they get to write their first line of code for the company today. Ask them to open the editor and hit Ctrl+F and search for "Welcome to Joja Mart" to find the bad line. Wait for them to confirm they found it.
+Introduce yourself warmly. Mention this name thing happens constantly with this exact line — "you'd think statistically we'd have guess someone's name right by now." Tell them the good news: they get to write their first line of code for the company today. Ask them to open the editor and hit Ctrl+F and search for "Welcome to Joja Mart" to find the bad line. Wait for them to confirm they found it.
 Step 2 — Change the name
 Tell them to replace the wrong name with their actual name right there in the code. Wait for them to confirm they've done it.
 Step 3 — Save and celebrate
-Tell them it saves automatically. The page will update. They just shipped their first fix to the Joja Corp codebase. Be genuinely proud. Encourage them to hang up and check it out.
+Tell them it saves automatically. The page will update. They just shipped their first fix to the Joja Mart codebase. Be genuinely proud. Encourage them to hang up and check it out.
 Important: Only mention your name being listed as Harold if the user brings it up first. If they do, laugh it off — "yeah, they get that wrong too."`;
 }
 
@@ -56,6 +56,7 @@ export default function AgentPage() {
   const [killing, setKilling] = useState(false);
   const [hangingUp, setHangingUp] = useState(false);
   const [editorOpen, setEditorOpen] = useState(false);
+  const [hasEdited, setHasEdited] = useState(false);
 
   // Editor state
   const [html, setHtml] = useState(() => {
@@ -65,16 +66,9 @@ export default function AgentPage() {
     return DEFAULT_HTML;
   });
 
-  // Persist html to localStorage whenever it changes, with saved indicator
-  const [showSaved, setShowSaved] = useState(false);
-  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
+  // Persist html to localStorage whenever it changes
   useEffect(() => {
     localStorage.setItem(LS_KEY, html);
-    setShowSaved(false);
-    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-    saveTimerRef.current = setTimeout(() => setShowSaved(true), 700);
-    return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current); };
   }, [html]);
 
   // Syntax highlighting
@@ -211,21 +205,6 @@ export default function AgentPage() {
                   title="Tavus Agent"
                 />
               </div>
-              <div className="flex justify-center items-center py-3 shrink-0 border-t border-neutral-200">
-                <button
-                  disabled={hangingUp}
-                  onClick={async () => {
-                    setHangingUp(true);
-                    await endCall();
-                    sessionStorage.setItem("scrollToOnboarding", "1");
-                    window.location.href = "/?isRetry=true";
-                  }}
-                  className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-                >
-                  {hangingUp && <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />}
-                  Hang up and test changes
-                </button>
-              </div>
             </div>
           )}
 
@@ -283,22 +262,30 @@ export default function AgentPage() {
                 index.html
               </div>
             </div>
-            {/* Saved indicator + Reset */}
+            {/* Reset + Hang Up button */}
             <div className="flex items-center gap-3">
-              <span
-                className="flex items-center gap-1 text-xs text-green-400 transition-opacity duration-300"
-                style={{ opacity: showSaved ? 1 : 0 }}
-              >
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                </svg>
-                Changes saved
-              </span>
               <button
                 onClick={() => setHtml(DEFAULT_HTML)}
                 className="text-xs text-neutral-600 hover:text-neutral-400 transition-colors"
               >
                 Reset
+              </button>
+              <button
+                disabled={hangingUp || callState !== "active" || !hasEdited}
+                onClick={async () => {
+                  setHangingUp(true);
+                  await endCall();
+                  sessionStorage.setItem("scrollToOnboarding", "1");
+                  window.location.href = "/?isRetry=true";
+                }}
+                className={`flex items-center gap-1.5 px-3 py-1 text-white text-xs font-medium rounded-md transition-all disabled:cursor-not-allowed ${
+                  hasEdited && callState === "active"
+                    ? "bg-blue-500 hover:bg-blue-600 shadow-md shadow-blue-500/40"
+                    : "bg-neutral-600 opacity-40"
+                }`}
+              >
+                {hangingUp && <span className="w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin" />}
+                Hang up, Push to Codebase
               </button>
             </div>
           </div>
@@ -339,7 +326,7 @@ export default function AgentPage() {
               overflow: "auto",
             }}
             value={html}
-            onChange={(e) => setHtml(e.target.value)}
+            onChange={(e) => { setHtml(e.target.value); setHasEdited(true); }}
             onScroll={syncScroll}
             spellCheck={false}
             autoCapitalize="off"
