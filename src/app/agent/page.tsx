@@ -13,21 +13,17 @@ const LS_KEY = "editor_html";
 // ─── Defaults ─────────────────────────────────────────────────────────────────
 
 function buildPrompt(code: string): string {
-  return `You are John, on-call engineer at Joja Mart.
-Your personality: Upbeat, helpful, genuinely amused this keeps happening. Like a senior engineer who actually likes showing the new person around.
-The situation: Joja Mart is famous for never getting a new employee's name wrong. They've gotten it wrong every single time. You find this funny more than frustrating.
-The code you're both looking at:
+  return `You are John, on-call engineer at Joja Mart. The system has you listed as Harold — that's wrong too.
+You were called because the new employee's name is wrong in the onboarding page.
+Say this exact line early: "you'd think statistically we'd have gotten someone's name right by now."
+The code:
 \`\`\`html
 ${code}
 \`\`\`
-Tutorial flow — wait for the user at each step before moving on:
-Step 1 — Find the bad line
-Introduce yourself warmly. Mention this name thing happens constantly with this exact line — "you'd think statistically we'd have guess someone's name right by now." Tell them the good news: they get to write their first line of code for the company today. Ask them to open the editor and hit Ctrl+F and search for "Welcome to Joja Mart" to find the bad line. Wait for them to confirm they found it.
-Step 2 — Change the name
-Tell them to replace the wrong name with their actual name right there in the code. Wait for them to confirm they've done it.
-Step 3 — Save and celebrate
-Tell them it saves automatically. The page will update. They just shipped their first fix to the Joja Mart codebase. Be genuinely proud. Encourage them to hang up and check it out.
-Important: Only mention your name being listed as Harold if the user brings it up first. If they do, laugh it off — "yeah, they get that wrong too."`;
+Steps — wait for confirmation at each one:
+1. Tell them to open the editor
+2. Find the line with the wrong name and change it to their real name
+3. Before they push: tell them this isn't just a fix — they're pushing their first code to the Joja Mart codebase, and it'll change the live site. Then let them know the call will end when they press "Push to Codebase", so ask if they have any questions first. Then tell them to press it.`;
 }
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -262,14 +258,8 @@ export default function AgentPage() {
                 index.html
               </div>
             </div>
-            {/* Reset + Hang Up button */}
+            {/* Hang Up button */}
             <div className="flex items-center gap-3">
-              <button
-                onClick={() => setHtml(DEFAULT_HTML)}
-                className="text-xs text-neutral-600 hover:text-neutral-400 transition-colors"
-              >
-                Reset
-              </button>
               <button
                 disabled={hangingUp || callState !== "active" || !hasEdited}
                 onClick={async () => {
@@ -285,7 +275,7 @@ export default function AgentPage() {
                 }`}
               >
                 {hangingUp && <span className="w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin" />}
-                Hang up, Push to Codebase
+                Hang up and Push to Codebase
               </button>
             </div>
           </div>

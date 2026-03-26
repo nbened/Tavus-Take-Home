@@ -102,7 +102,7 @@ export default function Home() {
             <span className="text-blue-600">Joja Mart</span>
           </h1>
           <p className="text-neutral-500 text-sm max-w-sm">
-            Joja Mart <span className="text-blue-600">never</span> gets names wrong. That's a promise.
+            Joja Mart is a company that <span className="text-blue-600">never</span> gets names wrong. That's a promise.
           </p>
         </div>
         <button
@@ -119,6 +119,16 @@ export default function Home() {
         className="snap-start h-[calc(100vh-57px)] relative overflow-hidden"
       >
         <IframeWithFallback html={pageHtml} />
+
+        <button
+          onClick={() => {
+            localStorage.setItem(LS_KEY, DEFAULT_HTML);
+            setPageHtml(DEFAULT_HTML);
+          }}
+          className="absolute bottom-6 left-6 z-10 text-xs text-neutral-400 hover:text-neutral-600 transition-colors"
+        >
+          Reset
+        </button>
 
         <div className="absolute bottom-6 right-6 z-10 flex items-center gap-3">
           {isRetry && (
